@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">PhotoMorph</string>
+    <string name="settings">Settings</string>
+    <string name="toggle">Toggle</string>
+    <string name="exit">Exit</string>
+    
+ 	<!-- Main SelectImage Activity -->
+    <string name="title_activity_select_image">Select Image</string>
+    <string name="reset">Reset</string>
+    <string name="choose">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="clear">Clear</string>
+    <string name="process">Process</string>
+    <string name="imageDesc">Loaded Image</string>
+    <!-- Main SelectImage Activity -->
+    
+    <!-- Settings Activity -->
+    <string name="title_activity_settings">Settings</string>
+    <string name="action_settings">Settings</string>
+    <string name="remoteip">Enter Remote IP Address</string>
+    <string name="remoteiphint">xxx.xxx.xxx.xxx</string>
+    <string name="remoteport">Enter Remote Port Number</string>
+    <string name="remoteporthint">xxxx</string>
+    <string name="save">Save</string>
+    <!-- Settings Activity -->
+    
+    <!-- Effects List -->
+    <string-array name="effects">
+        <item>None</item>
+        <item>Grayscale</item>
+        <item>Edge Detection</item>
+        <item>Blur</item>
+        <item>Negative</item>
+        <item>Sepia</item>
+        <item>Sketch</item>
+        <item>Oil Paint</item>
+    </string-array>
+    
+
+</resources>
