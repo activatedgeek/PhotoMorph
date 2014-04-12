@@ -12,15 +12,12 @@ import java.net.UnknownHostException;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.provider.MediaStore.Images;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -80,6 +77,8 @@ public class SendImage extends AsyncTask<Void, Void, Void>{
 	protected void onPostExecute(Void param){
 		Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
 		display.subSetImage((Bitmap) BitmapFactory.decodeFile(path));
+		File t = new File(path);
+		t.delete();
 		dialog.dismiss();
 	}
 	
@@ -101,9 +100,9 @@ public class SendImage extends AsyncTask<Void, Void, Void>{
 	}
 	
 	protected boolean receiveImage(Socket socket) throws IOException{
-		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "myInstagram" + File.separator);
+		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "PhotoMorph" + File.separator);
 		root.mkdirs();		
-		File save = new File(root,"sel.jpg");
+		File save = new File(root,"temp.jpg");
 		FileOutputStream out = new FileOutputStream(save);
 		
 		Bitmap bm = BitmapFactory.decodeStream(socket.getInputStream());
@@ -111,13 +110,6 @@ public class SendImage extends AsyncTask<Void, Void, Void>{
 			bm.compress(Bitmap.CompressFormat.JPEG, 100, out);
 			out.flush();
 			out.close();
-			
-			ContentValues content = new ContentValues();
-			content.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
-			content.put(Images.Media.MIME_TYPE, "image/jpeg");
-			content.put(MediaStore.MediaColumns.DATA, save.getAbsolutePath());
-			context.getContentResolver().insert(Images.Media.EXTERNAL_CONTENT_URI, content);
-			message = "Saved image to "+save.getAbsolutePath()+" and Added to library";
 		}catch(Exception e){
 			message = "Error: "+e.getMessage();
 		}
@@ -153,6 +145,7 @@ public class SendImage extends AsyncTask<Void, Void, Void>{
 				}
 				bos.flush();
 				bis.close();
+				file.delete();
 			}
 		}catch(Exception e){
 			message = "Error: "+e.getMessage();

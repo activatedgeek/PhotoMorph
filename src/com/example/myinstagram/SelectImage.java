@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,7 +36,7 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 public class SelectImage extends ActionBarActivity {
-	static final int IMG_CAPTURE=1,IMG_CHOOSE=2;
+	static final int IMG_CAPTURE=1,IMG_CHOOSE=2,SAVER=3;
 	static String remoteConfig = "Remote Configuration";
 	SharedPreferences config;
 	
@@ -47,7 +48,7 @@ public class SelectImage extends ActionBarActivity {
 	
 	Spinner effects;
 	String[] list;
-	String effect="None";
+	String effect="Select An Effect";
 	
 	DrawView display;
 	RelativeLayout main;
@@ -122,7 +123,7 @@ public class SelectImage extends ActionBarActivity {
 				if(imageBmp==null){
 					showToast("Please load an image first from camera/gallery");
 				}
-				else if(effect.equalsIgnoreCase("None")){
+				else if(effect.equalsIgnoreCase("Select An Effect")){
 					showToast("Please select an effect!");
 					effects.performClick();
 				}
@@ -154,7 +155,7 @@ public class SelectImage extends ActionBarActivity {
 			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,int row, long arg3){
 				effect = list[row];
-				showToast("Effect to be applied: "+list[row]);
+				showToast("Selected Mode: "+list[row]);
 			}
 
 			@Override
@@ -200,9 +201,9 @@ public class SelectImage extends ActionBarActivity {
 	private void captureImage(){
 		Intent capture = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
 		if(capture.resolveActivity(getPackageManager())!= null){
-			File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "myInstagram" + File.separator);
+			File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "PhotoMorph" + File.separator);
 			root.mkdirs();
-			File save = new File(root,"sel.jpg");
+			File save = new File(root,"capture.jpg");
 			Uri saveImageHere = Uri.fromFile(save);
 			capture.putExtra(MediaStore.EXTRA_OUTPUT, saveImageHere);
 			imageBmpPath = save.getAbsolutePath();
@@ -218,7 +219,7 @@ public class SelectImage extends ActionBarActivity {
 	}
 	
 	private String saveFile(String name){
-		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "myInstagram" + File.separator);
+		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "PhotoMorph" + File.separator);
 		root.mkdirs();
 		File save = new File(root,name);
 		try {
@@ -239,12 +240,8 @@ public class SelectImage extends ActionBarActivity {
 			display.reset();
 			imageBmp = (Bitmap) BitmapFactory.decodeFile(imageBmpPath);
 			display.setImageBitmap(imageBmp);
-			
-			ContentValues content = new ContentValues();
-			content.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
-			content.put(Images.Media.MIME_TYPE, "image/jpeg");
-			content.put(MediaStore.MediaColumns.DATA, imageBmpPath);
-			getContentResolver().insert(Images.Media.EXTERNAL_CONTENT_URI, content);
+			File temp = new File(imageBmpPath);
+			temp.delete();
 		}
 		else if(resultCode == RESULT_OK && requestCode == IMG_CHOOSE && data!=null){
 			display.reset();
@@ -263,6 +260,43 @@ public class SelectImage extends ActionBarActivity {
 				display.setImageResource(R.drawable.placeholder);
 			}
 		}
+		else if(resultCode == RESULT_OK && requestCode == SAVER){
+			saveImage();
+		}
+	}
+	
+	private void saveImage(){
+		Bitmap orig = display.getBitmap();
+		Bitmap bm = Bitmap.createScaledBitmap(orig, imageBmp.getWidth(), imageBmp.getHeight(), true);
+		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "PhotoMorph" + File.separator);
+		root.mkdirs();
+		String filename = config.getString("filename", "default.jpg");
+		File save = new File(root,filename);
+		try {
+			FileOutputStream out = new FileOutputStream(save);
+			bm.compress(Bitmap.CompressFormat.JPEG, 100, out);
+			out.flush();
+			out.close();
+			
+			ProgressDialog dialog  = new ProgressDialog(this);
+			dialog.setMessage("Please wait, image is being processed..");
+			dialog.setIndeterminate(true);
+	        dialog.setCancelable(false);
+			dialog.show();
+			
+			ContentValues content = new ContentValues();
+			content.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
+			content.put(Images.Media.MIME_TYPE, "image/jpeg");
+			content.put(MediaStore.MediaColumns.DATA, save.getAbsolutePath());
+			getContentResolver().insert(Images.Media.EXTERNAL_CONTENT_URI, content);
+			showToast("Saved and added image to gallery");
+			
+			dialog.dismiss();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -274,14 +308,22 @@ public class SelectImage extends ActionBarActivity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		int id = item.getItemId();
-		if(id == R.id.toggle){
+		if(id == R.id.save){
+			if(imageBmp!=null){
+				Intent saving = new Intent(this, Save.class);
+				startActivityForResult(saving, SAVER);
+			}else{
+				showToast("Please select an image to edit first!");
+			}
+		}
+		else if(id == R.id.toggle){
 			if(options.getVisibility() == View.INVISIBLE){
 				display.changeView(View.VISIBLE);
 			}else{
 				display.changeView(View.INVISIBLE);
 			}
 		}
-		if(id == R.id.settings){
+		else if(id == R.id.settings){
 			Intent settings = new Intent(this, Settings.class);
 			startActivity(settings);
 		}

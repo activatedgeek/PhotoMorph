@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -13,8 +12,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.provider.MediaStore.Images;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -81,6 +78,8 @@ class DrawView extends ImageView{
 	public void setImageBitmap(Bitmap bm){
 		super.setImageBitmap(bm);
 		reset();
+		strokeWidth=16;
+		cr=(strokeWidth*3)/2;
 	}
 	
 	@Override
@@ -159,6 +158,8 @@ class DrawView extends ImageView{
 		ex=ey=-100;
 		
 		//Reset Selection
+		strokeWidth=0;
+		cr=(strokeWidth*3)/2;
 		selection=false;
 		this.destroyDrawingCache();
 		this.invalidate();
@@ -310,9 +311,9 @@ class DrawView extends ImageView{
 		Bitmap bmp = this.getDrawingCache(true);
 		Bitmap bm = Bitmap.createBitmap(bmp, bsx+strokeWidth/2,bsy+strokeWidth/2,bex-bsx-strokeWidth, bey-bsy-strokeWidth);
 		
-		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "myInstagram" + File.separator);
+		File root = new File(Environment.getExternalStorageDirectory()+ File.separator + "PhotoMorph" + File.separator);
 		root.mkdirs();
-		File save = new File(root,"sel.jpg");
+		File save = new File(root,"temp.jpg");
 		FileOutputStream out = new FileOutputStream(save);
 		
 		try{
@@ -320,16 +321,21 @@ class DrawView extends ImageView{
 			out.flush();
 			out.close();
 			Toast.makeText(context, "Saved Image to "+save.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-			
-			ContentValues content = new ContentValues();
-			content.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
-			content.put(Images.Media.MIME_TYPE, "image/jpeg");
-			content.put(MediaStore.MediaColumns.DATA, save.getAbsolutePath());
-			context.getContentResolver().insert(Images.Media.EXTERNAL_CONTENT_URI, content);
 		}catch(Exception e){
 			Toast.makeText(context, "Error: "+e.getMessage(), Toast.LENGTH_SHORT).show();
 		}
 		return save.getAbsolutePath();
+	}
+	
+	public Bitmap getBitmap(){
+		fixCoords();
+		bsx=sx;bsy=sy;bex=ex;bey=ey;
+		reset();
+		
+		this.buildDrawingCache();
+		Bitmap bmp = this.getDrawingCache(true);
+		Bitmap bm = Bitmap.createBitmap(bmp, 0, 0, width, height);
+		return bm;
 	}
 	
 	public void subSetImage(Bitmap image){
